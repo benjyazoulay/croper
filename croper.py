@@ -5,14 +5,26 @@ import os
 import zipfile
 import io
 
+def calculate_overlap(dimension, tile_size):
+    n_tiles = (dimension + tile_size - 1) // tile_size
+    if n_tiles > 1:
+        overlap = (tile_size * n_tiles - dimension) / (n_tiles - 1)
+    else:
+        overlap = 0
+    return int(overlap), n_tiles
+
 def crop_image(image, size=1024):
     width, height = image.size
-    overlap_h = (size - (width % size)) // 2 if width % size != 0 else 0
-    overlap_v = (size - (height % size)) // 2 if height % size != 0 else 0
-    
+
+    # Calcul des overlaps pour la largeur et la hauteur
+    overlap_x, n_tiles_x = calculate_overlap(width, size)
+    overlap_y, n_tiles_y = calculate_overlap(height, size)
+
     crops = []
-    for top in range(0, height, size - overlap_v):
-        for left in range(0, width, size - overlap_h):
+    for i in range(n_tiles_y):
+        for j in range(n_tiles_x):
+            left = j * (size - overlap_x)
+            top = i * (size - overlap_y)
             box = (left, top, min(left + size, width), min(top + size, height))
             cropped_img = image.crop(box)
             crops.append(cropped_img)
@@ -28,7 +40,7 @@ def save_crops_as_zip(crops):
     return zip_buffer
 
 def main():
-    st.title("Découper une image en haute résolution en tuiles de 1024x1024 avec overlap")
+    st.title("Découper une image en haute résolution en tuiles de 1024x1024")
 
     uploaded_file = st.file_uploader("Choisissez une image en haute résolution", type=["jpg", "jpeg", "png"])
     if uploaded_file is not None:
