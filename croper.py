@@ -5,11 +5,14 @@ import os
 import zipfile
 import io
 
-def crop_image(image, size=1024, overlap=128):
+def crop_image(image, size=1024):
     width, height = image.size
+    overlap_h = (size - (width % size)) // 2 if width % size != 0 else 0
+    overlap_v = (size - (height % size)) // 2 if height % size != 0 else 0
+    
     crops = []
-    for top in range(0, height, size - overlap):
-        for left in range(0, width, size - overlap):
+    for top in range(0, height, size - overlap_v):
+        for left in range(0, width, size - overlap_h):
             box = (left, top, min(left + size, width), min(top + size, height))
             cropped_img = image.crop(box)
             crops.append(cropped_img)
@@ -33,7 +36,7 @@ def main():
         st.image(image, caption="Image originale", use_column_width=True)
 
         if st.button("Découper l'image"):
-            crops = crop_image(image, size=1024, overlap=128)
+            crops = crop_image(image, size=1024)
             st.write(f"Nombre d'images générées : {len(crops)}")
 
             zip_buffer = save_crops_as_zip(crops)
